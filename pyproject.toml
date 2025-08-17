@@ -1,0 +1,46 @@
+[project]
+dependencies = [
+  "fastapi>=0.116.1",
+  "httpx>=0.28.1",
+  "ignr>=2.2",
+  "uvicorn>=0.35.0",
+]
+description = "Add your description here"
+name = "todo-fast-api"
+readme = "README.md"
+requires-python = ">=3.9"
+version = "0.1.0"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
+  "pytest-cov>=6.2.1",
+  "ruff>=0.12.9",
+  "taskipy>=1.14.1",
+]
+
+[tool.ruff]
+extend-exclude = ['migrations']
+line-length = 79
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
+
+[tool.pytest.ini_options]
+addopts = '-p no:warnings'
+pythonpath = '.'
+
+[tool.taskipy.tasks]
+run = 'uv run uvicorn src.main:app --reload'
+
+post_test = 'coverage html'
+pre_test = 'task lint'
+test = 'pytest --cov=src -vv'
+
+format = 'ruff check . --fix && ruff format .'
+lint = 'ruff check . && ruff check . --diff'
