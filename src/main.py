@@ -1,12 +1,55 @@
 from http import HTTPStatus
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
-from .schemas import Message
+from .schemas import Message, UserDB, UserList, UserPublic, UserSchema
 
 app = FastAPI()
+
+
+database = []
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
 def read_root():
     return {'message': 'App TO LIST'}
+
+
+@app.post('/users/', response_model=UserPublic, status_code=HTTPStatus.CREATED)
+def create_user(user: UserSchema):
+    user_with_id = UserDB(id=len(database) + 1, **user.model_dump())
+
+    database.append(user_with_id)
+    return user_with_id
+
+
+@app.get('/users/', response_model=UserList)
+def read_users():
+    return {'users': database}
+
+
+@app.put('/users/{user_id}', response_model=UserPublic)
+def update_user(user_id: int, user: UserSchema):
+    if user_id < 0 or user_id > len(database):
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Invalid ID'
+        )
+
+    for db_user in database:
+        if db_user.id == user_id:
+            updated_user = db_user.copy(update=user.model_dump())
+            database[database.index(db_user)] = updated_user
+            return updated_user
+
+
+@app.delete('/users/{user_id}', response_model=Message)
+def delete_user(user_id: int):
+    if user_id < 0 or user_id > len(database):
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Invalid ID'
+        )
+
+    for db_user in database:
+        if db_user.id == user_id:
+            database.remove(db_user)
+            return {'message': 'User deleted successfully'}
